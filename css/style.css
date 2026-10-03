@@ -422,9 +422,9 @@ dialog .btn.primary:hover { background: var(--indigo); }
     padding-top: max(112px, 17vh); padding-top: max(112px, 17svh);
     padding-bottom: 120px;
   }
-  /* 手機：句與句之間留呼吸空間，但不要大到整屏空白（約 20% 畫面高） */
-  .statement { padding-top: 64px; padding-bottom: 56px; }
-  .statement .line { min-height: 30vh; min-height: 30svh; }
+  /* 手機：句與句之間只留一點呼吸空間（約 10% 畫面高） */
+  .statement { padding-top: 56px; padding-bottom: 48px; }
+  .statement .line { min-height: 17vh; min-height: 17svh; }
   .know-list { grid-template-columns: 1fr; }
   .topic-row { grid-template-columns: auto 1fr; }
   .topic-row .arrow { display: none; }
