@@ -191,21 +191,25 @@ button { font-family: inherit; }
   background: var(--white);
   padding: clamp(72px, 12vw, 140px) var(--pad) clamp(40px, 8vw, 100px);
 }
-/* 一句一屏：每一句話各佔大半個畫面，捲動時逐句出現 */
+/* 逐句出現。電腦版句與句靠近一點；手機版才拉成一句一屏（見下方 media） */
 .statement .line {
-  max-width: 22em; margin: 0;
-  min-height: 62vh; min-height: 62svh;
+  max-width: 26em; margin: 0;
+  min-height: 13vh; min-height: 13svh;
   display: flex; align-items: center;
-  font-size: clamp(28px, 4.8vw, 56px); font-weight: 800; line-height: 1.5;
+  font-size: clamp(28px, 4vw, 48px); font-weight: 800; line-height: 1.5;
   letter-spacing: .01em;
+  text-wrap: balance;  /* 折行時均分，避免最後一行只剩一兩個字 */
 }
 .statement .line:last-child { color: var(--accent); }
 
 /* 首頁分段吸附：捲動停下時，自動靠向最近的一屏（proximity：只有靠近時才吸，不會硬拉） */
 html.snap { scroll-snap-type: y proximity; }
 html.snap .hero { scroll-snap-align: start; }
-html.snap .statement .line { scroll-snap-align: center; }
 html.snap .topics { scroll-snap-align: start; }
+/* 句子靠得近的電腦版不需要吸附；只有手機的「一句一屏」才吸附 */
+@media (max-width: 820px) {
+  html.snap .statement .line { scroll-snap-align: center; }
+}
 
 /* ---------- 首頁：主題（淺灰底） ---------- */
 .topics {
