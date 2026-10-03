@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 320" role="img" aria-label="柔和的山丘、太陽與一盞溫暖的窗">
+  <rect width="480" height="320" rx="28" fill="#f6ead9"/>
+  <circle cx="350" cy="90" r="46" fill="#f2d3b0"/>
+  <circle cx="350" cy="90" r="64" fill="#f2d3b0" opacity=".35"/>
+  <path d="M0 230 C80 170 160 180 240 215 C320 250 400 190 480 205 V320 H0Z" fill="#cfdccb"/>
+  <path d="M0 265 C100 220 190 245 270 262 C350 280 420 245 480 255 V320 H0Z" fill="#a9c0a6"/>
+  <g transform="translate(110 150)">
+    <path d="M0 62 L52 12 L104 62Z" fill="#c9a98a"/>
+    <rect x="12" y="62" width="80" height="58" rx="4" fill="#e9d6bf"/>
+    <rect x="40" y="76" width="24" height="26" rx="3" fill="#ffe7a8"/>
+    <path d="M52 76 V102 M40 89 H64" stroke="#c9a98a" stroke-width="2"/>
+    <rect x="76" y="2" width="12" height="28" rx="2" fill="#b5906f"/>
+  </g>
+  <g fill="#fffdf9" opacity=".85">
+    <ellipse cx="90" cy="70" rx="34" ry="11"/><ellipse cx="116" cy="62" rx="22" ry="10"/>
+    <ellipse cx="250" cy="48" rx="28" ry="9"/><ellipse cx="272" cy="42" rx="18" ry="8"/>
+  </g>
+</svg>

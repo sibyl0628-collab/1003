@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>心語小屋・AI 個人心理諮商師</title>
+  <meta name="description" content="一個安靜的地方，用對話慢慢釐清你的心情與需求。所有內容只留在你的瀏覽器。">
+  <link rel="icon" type="image/svg+xml" href="images/logo.svg">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <a class="skip" href="#main">跳到主要內容</a>
+
+  <header class="site-header">
+    <button class="brand" id="brandBtn" type="button" aria-label="回到首頁">
+      <img src="images/logo.svg" alt="" width="36" height="36">
+      <span>心語小屋</span>
+    </button>
+    <button class="help-btn" id="helpBtn" type="button">需要協助？</button>
+  </header>
+
+  <main id="main">
+    <!-- 首頁 -->
+    <section id="home" class="view">
+      <div class="hero">
+        <div class="hero-text">
+          <h1>慢慢說，我在這裡聽。</h1>
+          <p>這是一個安靜的地方。選一個你想聊的主題，我會用幾個簡單的問題，陪你把心裡的感受與需求一點一點整理清楚。</p>
+          <div class="notice">
+            <strong>先說清楚</strong>
+            <ul>
+              <li>這是「自我整理工具」，不是醫療或專業心理諮商，也無法做診斷。</li>
+              <li id="privacyNote">你說的內容只會留在這台裝置的瀏覽器，不會傳到任何伺服器。</li>
+              <li>如果你正處於危險或很痛苦，請直接撥打下方專線，真人會陪你。</li>
+            </ul>
+          </div>
+        </div>
+        <img class="hero-img" src="images/hero.svg" alt="柔和的山丘、太陽與一間亮著燈的小屋">
+      </div>
+
+      <div id="resumeBox" class="resume" hidden>
+        <p>你有一段還沒聊完的對話：<strong id="resumeTitle"></strong></p>
+        <div class="row">
+          <button class="btn primary" id="resumeBtn" type="button">繼續上次的對話</button>
+          <button class="btn ghost" id="discardBtn" type="button">不用了，清除</button>
+        </div>
+      </div>
+
+      <h2 class="section-title">今天想聊什麼？</h2>
+      <div id="topicGrid" class="topic-grid"></div>
+      <noscript><p class="notice">這個網站需要開啟 JavaScript 才能進行對話。</p></noscript>
+    </section>
+
+    <!-- 對話 -->
+    <section id="chat" class="view" hidden>
+      <div class="chat-bar">
+        <button class="btn ghost small" id="backBtn" type="button">← 回首頁</button>
+        <span id="chatTitle" class="chat-title"></span>
+        <button class="btn ghost small" id="restartBtn" type="button">重新開始</button>
+      </div>
+      <p id="aiBanner" class="ai-banner" hidden>DEMO：這是 AI 回應，內容會送到 Google Gemini 免費版。請勿輸入真實隱私，用虛構情境體驗即可。</p>
+      <div id="log" class="log" role="log" aria-live="polite" aria-label="對話內容"></div>
+      <div id="controls" class="controls">
+        <div id="choices" class="choices"></div>
+        <form id="textForm" class="text-form" autocomplete="off">
+          <label for="textInput" class="sr-only">輸入你想說的話</label>
+          <textarea id="textInput" rows="2" maxlength="500" placeholder="也可以用自己的話說說看…"></textarea>
+          <div class="row">
+            <button class="btn primary" type="submit">送出</button>
+            <button class="btn ghost" id="skipBtn" type="button" hidden>先跳過這題</button>
+            <button class="btn" id="summarizeBtn" type="button" hidden>整理今天的對話</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- 摘要 -->
+    <section id="result" class="view" hidden>
+      <h2 class="section-title">今天整理出來的你</h2>
+      <p class="muted" id="resultTopic"></p>
+      <div id="resultBody" class="result-body"></div>
+      <div class="row wrap">
+        <button class="btn primary" id="copyBtn" type="button">複製內容</button>
+        <button class="btn" id="downloadBtn" type="button">下載成文字檔</button>
+        <button class="btn ghost" id="againBtn" type="button">聊別的主題</button>
+        <button class="btn ghost" id="clearBtn" type="button">清除這次紀錄</button>
+      </div>
+      <p class="status" id="status" role="status" aria-live="polite"></p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <h2>需要真人陪伴時，隨時可以撥打</h2>
+    <ul class="hotlines" id="footerHotlines"></ul>
+    <p class="fine">心語小屋不能取代專業醫療或心理諮商。如果情況持續影響你的生活，請尋求身心科醫師或心理師協助。</p>
+  </footer>
+
+  <!-- 危機提示 -->
+  <dialog id="crisisDialog" aria-labelledby="crisisTitle">
+    <form method="dialog">
+      <h2 id="crisisTitle">我很在意你現在的安全</h2>
+      <p>聽到你正在承受這麼大的痛苦，我很心疼。你不需要一個人撐著，現在就有真人可以陪你說話：</p>
+      <ul class="hotlines" id="crisisHotlines"></ul>
+      <p>如果你有立即傷害自己的危險，請撥 110 或 119，或請身邊的人陪著你。</p>
+      <div class="row wrap">
+        <button class="btn primary" value="continue">我知道了，想繼續聊</button>
+        <button class="btn ghost" value="close">先關閉</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="helpDialog" aria-labelledby="helpTitle">
+    <form method="dialog">
+      <h2 id="helpTitle">需要真人協助</h2>
+      <ul class="hotlines" id="helpHotlines"></ul>
+      <div class="row"><button class="btn primary" value="close">關閉</button></div>
+    </form>
+  </dialog>
+
+  <script src="js/config.js"></script>
+  <script src="js/scripts.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
