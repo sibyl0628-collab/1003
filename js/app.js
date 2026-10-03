@@ -45,7 +45,10 @@
   }
   function show(name) {
     Object.keys(views).forEach(function (k) { views[k].hidden = k !== name; });
+    // 只有首頁使用「分段吸附」的捲動，對話與摘要頁要自由捲動
+    document.documentElement.classList.toggle('snap', name === 'home');
     window.scrollTo(0, 0);
+    onScroll();
   }
 
   function renderHotlines(ul) {
@@ -99,8 +102,22 @@
     div.className = 'bubble ' + role;
     div.textContent = text;
     logEl.appendChild(div);
-    div.scrollIntoView({ block: 'end', behavior: reduceMotion ? 'auto' : 'smooth' });
+    scrollToEl(div);
     return div;
+  }
+
+  // 捲到新訊息：固定在底部的輸入區會蓋住畫面下緣，所以要預留它的高度（見 CSS 的 scroll-margin）。
+  // 訊息比可視區域還高時，改成對齊訊息開頭，才不會讓人漏看前半段。
+  function scrollToEl(el) {
+    var ctrl = $('#controls');
+    var ctrlH = ctrl ? ctrl.offsetHeight : 0;
+    // 每次捲動前重新量一次，不依賴觀察器，避免高度過時
+    document.documentElement.style.setProperty('--controls-h', ctrlH + 'px');
+    var room = window.innerHeight - ctrlH - 140;
+    el.scrollIntoView({
+      block: el.offsetHeight > room ? 'start' : 'end',
+      behavior: reduceMotion ? 'auto' : 'smooth'
+    });
   }
 
   async function counselorSay(lines) {
@@ -111,7 +128,7 @@
       dots.setAttribute('aria-hidden', 'true');
       dots.innerHTML = '<span></span><span></span><span></span>';
       logEl.appendChild(dots);
-      dots.scrollIntoView({ block: 'end' });
+      scrollToEl(dots);
       await sleep(500 + Math.min(lines[i].length * 18, 900));
       dots.remove();
       if (mine !== session) return false;
@@ -171,7 +188,7 @@
     dots.setAttribute('aria-hidden', 'true');
     dots.innerHTML = '<span></span><span></span><span></span>';
     logEl.appendChild(dots);
-    dots.scrollIntoView({ block: 'end' });
+    scrollToEl(dots);
     return dots;
   }
 
@@ -194,7 +211,7 @@
     });
     div.appendChild(row);
     logEl.appendChild(div);
-    div.scrollIntoView({ block: 'end' });
+    scrollToEl(div);
   }
 
   function aiErrorText(err) {
@@ -393,8 +410,15 @@
     else handleAnswer({ type: 'text', text: text });
   });
   summarizeBtn.addEventListener('click', summarizeWithAi);
+  // 電腦上：Enter 送出、Shift + Enter 換行。手機（觸控）維持 Enter 換行，用「送出」按鈕。
+  // 注意輸入法選字時按的 Enter 是確認文字，不能當成送出（isComposing / keyCode 229）。
   input.addEventListener('keydown', function (e) {
-    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) form.requestSubmit();
+    if (e.key !== 'Enter' || e.isComposing || e.keyCode === 229) return;
+    var desktop = window.matchMedia && window.matchMedia('(pointer: fine)').matches;
+    if ((desktop && !e.shiftKey) || e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+      form.requestSubmit();
+    }
   });
   skipBtn.addEventListener('click', function () {
     if (busy) return;
@@ -623,6 +647,31 @@
   renderHotlines($('#helpHotlines'));
   renderTopics();
   showHome();
+
+  // 輸入區是固定在畫面底部的，把它的高度記成 CSS 變數，讓新訊息捲動時不會被它蓋住
+  var controlsEl = $('#controls');
+  function syncControlsH() {
+    document.documentElement.style.setProperty('--controls-h', controlsEl.offsetHeight + 'px');
+  }
+  if ('ResizeObserver' in window) new ResizeObserver(syncControlsH).observe(controlsEl);
+  window.addEventListener('resize', syncControlsH);
+  syncControlsH();
+
+  // 捲動視差：首屏的標題隨捲動上移淡出，色塊以不同速度移動，營造「穿過一個空間」的感覺
+  var heroEl = $('.hero');
+  var ticking = false;
+  function onScroll() {
+    if (reduceMotion || !heroEl || views.home.hidden) return;
+    var y = window.pageYOffset || 0;
+    var h = heroEl.offsetHeight || 1;
+    heroEl.style.setProperty('--p', Math.min(1, Math.max(0, y / (h * 0.75))).toFixed(3));
+    heroEl.style.setProperty('--sy', Math.min(y, h * 1.2).toFixed(0));
+  }
+  window.addEventListener('scroll', function () {
+    if (ticking) return;
+    ticking = true;
+    window.requestAnimationFrame(function () { ticking = false; onScroll(); });
+  }, { passive: true });
 
   // 捲動到畫面內時才淡入。沒有 IntersectionObserver 或使用者要求減少動態時，直接全部顯示
   function initReveal() {
