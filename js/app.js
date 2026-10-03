@@ -567,14 +567,20 @@
     TOPICS.forEach(function (t) {
       var b = document.createElement('button');
       b.type = 'button';
-      b.className = 'topic-card';
+      b.className = 'topic-row reveal';
       var img = document.createElement('img');
-      img.src = t.icon; img.alt = ''; img.width = 48; img.height = 48;
+      img.src = t.icon; img.alt = ''; img.width = 64; img.height = 64;
+      var box = document.createElement('div');
       var h = document.createElement('h3');
       h.textContent = t.title;
       var p = document.createElement('p');
       p.textContent = t.desc;
-      b.appendChild(img); b.appendChild(h); b.appendChild(p);
+      box.appendChild(h); box.appendChild(p);
+      var arrow = document.createElement('span');
+      arrow.className = 'arrow';
+      arrow.setAttribute('aria-hidden', 'true');
+      arrow.textContent = '→';
+      b.appendChild(img); b.appendChild(box); b.appendChild(arrow);
       b.addEventListener('click', function () { startTopic(t.id); });
       grid.appendChild(b);
     });
@@ -617,4 +623,21 @@
   renderHotlines($('#helpHotlines'));
   renderTopics();
   showHome();
+
+  // 捲動到畫面內時才淡入。沒有 IntersectionObserver 或使用者要求減少動態時，直接全部顯示
+  function initReveal() {
+    var items = document.querySelectorAll('.reveal');
+    if (!('IntersectionObserver' in window) || reduceMotion) {
+      items.forEach(function (el) { el.classList.add('in'); });
+      return;
+    }
+    document.documentElement.classList.add('js');
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+      });
+    }, { threshold: 0.2 });
+    items.forEach(function (el) { io.observe(el); });
+  }
+  initReveal();
 })();
