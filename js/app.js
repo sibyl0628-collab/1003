@@ -51,26 +51,55 @@
     onScroll();
   }
 
+  /* ---------- 求助資源（依地區） ---------- */
+  var REGION_KEY = 'aiCounselor.region';
+  var region = DEFAULT_REGION;
+  try {
+    var savedRegion = localStorage.getItem(REGION_KEY);
+    if (savedRegion && HOTLINES_BY_REGION[savedRegion]) region = savedRegion;
+  } catch (e) { /* 忽略 */ }
+
   function renderHotlines(ul) {
     ul.textContent = '';
-    HOTLINES.forEach(function (h) {
+    HOTLINES_BY_REGION[region].lines.forEach(function (h) {
       var li = document.createElement('li');
-      var a = document.createElement('a');
-      a.href = 'tel:' + h.number.split(' ')[0];
-      a.textContent = h.number;
-      a.className = 'num';
-      var name = document.createElement('span');
-      name.className = 'hl-name';
-      name.textContent = h.name;
+      var head;
+      if (h.number) {                       // 有號碼：可撥打
+        head = document.createElement('a');
+        head.href = 'tel:' + h.number.split(' ')[0];
+        head.textContent = h.number;
+        head.className = 'num';
+      } else if (h.url) {                   // 有網址：外部連結
+        head = document.createElement('a');
+        head.href = h.url;
+        head.target = '_blank';
+        head.rel = 'noopener noreferrer';
+        head.textContent = h.name + ' ↗';
+        head.className = 'num text';
+      } else {                              // 只有文字說明
+        head = document.createElement('span');
+        head.textContent = h.name;
+        head.className = 'num text';
+      }
+      li.appendChild(head);
+      if (h.number) {
+        var name = document.createElement('span');
+        name.className = 'hl-name';
+        name.textContent = h.name;
+        li.appendChild(name);
+      }
       var note = document.createElement('span');
       note.className = 'hl-note';
       note.textContent = h.note;
-      li.appendChild(a); li.appendChild(name); li.appendChild(note);
+      li.appendChild(note);
       ul.appendChild(li);
     });
   }
+  function renderAllHotlines() {
+    ['#footerHotlines', '#crisisHotlines', '#helpHotlines'].forEach(function (s) { renderHotlines($(s)); });
+  }
 
-  /* ---------- 諮商師：決定「說什麼、下一步去哪」 ----------
+  /* ---------- 陪伴對話的大腦：決定「說什麼、下一步去哪」 ----------
    * 這是整個網站唯一需要替換的「大腦」。
    * 現在用腳本（scripts.js）回應；日後要接真正的 AI，
    * 只要把這個函式改成呼叫 AI 服務，回傳同樣格式即可：
@@ -168,7 +197,7 @@
     return fetch(window.AI_CONFIG.endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ mode: mode, topic: topicById(state.topicId).title, messages: msgs }),
+      body: JSON.stringify({ mode: mode, topic: topicById(state.topicId).title, region: region, messages: msgs }),
       signal: ctrl.signal
     }).then(function (r) {
       return r.json().catch(function () { return {}; }).then(function (d) {
@@ -199,19 +228,35 @@
     var p = document.createElement('p');
     p.textContent = text;
     div.appendChild(p);
-    var row = document.createElement('div');
-    row.className = 'row wrap';
-    actions.forEach(function (a) {
-      var b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'btn small';
-      b.textContent = a.label;
-      b.addEventListener('click', function () { div.remove(); a.run(); });
-      row.appendChild(b);
-    });
-    div.appendChild(row);
+    if (actions && actions.length) {
+      var row = document.createElement('div');
+      row.className = 'row wrap';
+      actions.forEach(function (a) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'btn small';
+        b.textContent = a.label;
+        b.addEventListener('click', function () { div.remove(); a.run(); });
+        row.appendChild(b);
+      });
+      div.appendChild(row);
+    }
     logEl.appendChild(div);
     scrollToEl(div);
+  }
+
+  // 聊了一陣子（每 8 輪一次）就溫和提醒：可以先整理，也別忘了身邊的人。
+  // 這是固定文字，不經過 AI，避免依賴模型是否記得提醒。
+  function maybeNudge() {
+    var n = userTurns();
+    var next = state.nudgeNext || 8;
+    if (n < next) return;
+    state.nudgeNext = n + 8;
+    save();
+    addNotice('已經聊了一陣子了。要不要先把今天聊的整理一下？也別忘了，身邊信任的人也能陪你。', [
+      { label: '整理今天的對話', run: summarizeWithAi },
+      { label: '繼續聊', run: function () { input.focus({ preventScroll: true }); } }
+    ]);
   }
 
   function aiErrorText(err) {
@@ -271,10 +316,17 @@
       save();
       busy = false;
       renderAiControls();
+      maybeNudge();
     } catch (err) {
       typing.remove();
       if (mine !== session) { busy = false; return; }
       busy = false;
+      // 額度用完或太多人同時使用（429）：還沒聊多少就自動改用引導式問答，不讓訪客卡住。
+      // 已經聊了一些時不自動切換（會丟失對話），改由訪客自己選。
+      if (err && err.status === 429 && userTurns() <= 1) {
+        startTopic(state.topicId, true, '現在 AI 的使用額度暫時用完，或同時使用的人太多，已先為你改用引導式問答。稍後想再體驗 AI 對話，可以回首頁重新開始。');
+        return;
+      }
       addNotice(aiErrorText(err), [
         { label: '重試', run: function () { aiTurn(session); } },
         { label: '改用引導式問答（會重新開始）', run: function () { startTopic(state.topicId, true); } }
@@ -435,7 +487,7 @@
   });
 
   /* ---------- 開始／繼續／重來 ---------- */
-  async function startTopic(id, forceScript) {
+  async function startTopic(id, forceScript, notice) {
     var topic = topicById(id);
     state = {
       topicId: id, nodeId: topic.start, answers: [], tips: [], log: [], done: false,
@@ -443,6 +495,7 @@
     };
     save();
     openChat(topic);
+    if (notice) addNotice(notice, []);
     await enterNode(topic.start, false);
   }
 
@@ -461,14 +514,32 @@
     var topic = topicById(state.topicId);
     if (!topic || !topic.nodes[state.nodeId]) { wipe(); showHome(); return; }
     openChat(topic);
+    restoreLog();
+    if (state.done) { showResult(); return; }
+    enterNode(state.nodeId, true);
+  }
+
+  // 把已存的對話紀錄重新畫到畫面上
+  function restoreLog() {
     state.log.forEach(function (m) {
       var d = document.createElement('div');
       d.className = 'bubble ' + m.role;
       d.textContent = m.text;
       logEl.appendChild(d);
     });
-    if (state.done) { showResult(); return; }
-    enterNode(state.nodeId, true);
+  }
+
+  // 看完摘要後回到對話繼續聊（AI 模式）。再按「整理今天的對話」會用完整對話重新整理。
+  function backToChat() {
+    if (!state || !isAi()) return;
+    var topic = topicById(state.topicId);
+    state.done = false;
+    save();
+    openChat(topic);
+    restoreLog();
+    renderAiControls();
+    var last = logEl.lastElementChild;
+    if (last) scrollToEl(last);
   }
 
   /* ---------- 摘要 ---------- */
@@ -498,6 +569,7 @@
 
   function showResult() {
     var s = buildSummary();
+    $('#backToChatBtn').hidden = !isAi();   // 腳本式問答已走完流程，沒有「繼續聊」；只有 AI 對話可以
     $('#resultTopic').textContent = '主題：' + s.topic.title;
     var body = $('#resultBody');
     body.textContent = '';
@@ -632,6 +704,7 @@
   $('#backBtn').addEventListener('click', function () { showHome(); });
   $('#againBtn').addEventListener('click', function () { showHome(); });
   $('#clearBtn').addEventListener('click', function () { wipe(); showHome(); });
+  $('#backToChatBtn').addEventListener('click', backToChat);
   $('#restartBtn').addEventListener('click', function () {
     if (busy) return;
     if (window.confirm('要清掉目前的對話，重新開始這個主題嗎？')) startTopic(state.topicId);
@@ -642,9 +715,20 @@
     ? '【DEMO 展示站】AI 模式下，你輸入的內容會經由中轉服務送到 Google Gemini 免費版處理，Google 可能用來改進產品，也可能有人工審閱。請不要輸入真實姓名、聯絡方式或任何敏感隱私，用虛構的情境來體驗就好。'
     : '你說的內容只會留在這台裝置的瀏覽器，不會傳到任何伺服器。';
 
-  renderHotlines($('#footerHotlines'));
-  renderHotlines($('#crisisHotlines'));
-  renderHotlines($('#helpHotlines'));
+  var regionSel = $('#regionSel');
+  Object.keys(HOTLINES_BY_REGION).forEach(function (k) {
+    var o = document.createElement('option');
+    o.value = k;
+    o.textContent = HOTLINES_BY_REGION[k].label;
+    regionSel.appendChild(o);
+  });
+  regionSel.value = region;
+  regionSel.addEventListener('change', function () {
+    region = HOTLINES_BY_REGION[regionSel.value] ? regionSel.value : DEFAULT_REGION;
+    try { localStorage.setItem(REGION_KEY, region); } catch (e) { /* 忽略 */ }
+    renderAllHotlines();
+  });
+  renderAllHotlines();
   renderTopics();
   showHome();
 

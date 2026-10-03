@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>心語小屋・AI 個人心理諮商師</title>
+  <title>心語小屋・AI 心理陪伴</title>
   <meta name="description" content="一個安靜的地方，用對話慢慢釐清你的心情與需求。">
   <meta name="theme-color" content="#3b5bb5">
   <link rel="icon" type="image/svg+xml" href="images/logo.svg">
   <!-- ?v= 是版本號：每次更新網站時把它改成新的數字，瀏覽器就會重新下載，不會吃到舊暫存 -->
-  <link rel="stylesheet" href="css/style.css?v=5">
+  <link rel="stylesheet" href="css/style.css?v=6">
 </head>
 <body>
   <a class="skip" href="#main">跳到主要內容</a>
@@ -113,8 +113,10 @@
         <h2 class="result-title">今天整理出來的你</h2>
         <p class="result-topic" id="resultTopic"></p>
         <div id="resultBody" class="result-body"></div>
+        <p class="result-note">下一步：可以把這份整理拿給你信任的人，或心理師看看，讓身邊的人也能陪你。</p>
         <div class="row wrap">
-          <button class="btn primary" id="copyBtn" type="button">複製內容</button>
+          <button class="btn primary" id="backToChatBtn" type="button" hidden>回到對話繼續聊</button>
+          <button class="btn outline" id="copyBtn" type="button">複製內容</button>
           <button class="btn outline" id="downloadBtn" type="button">下載成文字檔</button>
           <button class="btn ghost" id="againBtn" type="button">聊別的主題</button>
           <button class="btn ghost" id="clearBtn" type="button">清除這次紀錄</button>
@@ -126,6 +128,10 @@
 
   <footer class="site-footer">
     <h2>需要真人陪伴時，隨時可以撥打</h2>
+    <p class="region">
+      <label for="regionSel">求助資源地區</label>
+      <select id="regionSel"></select>
+    </p>
     <ul class="hotlines" id="footerHotlines"></ul>
     <p class="fine">心語小屋不能取代專業醫療或心理諮商。如果情況持續影響你的生活，請尋求身心科醫師或心理師協助。</p>
   </footer>
@@ -152,8 +158,8 @@
     </form>
   </dialog>
 
-  <script src="js/config.js?v=5"></script>
-  <script src="js/scripts.js?v=5"></script>
-  <script src="js/app.js?v=5"></script>
+  <script src="js/config.js?v=6"></script>
+  <script src="js/scripts.js?v=6"></script>
+  <script src="js/app.js?v=6"></script>
 </body>
 </html>

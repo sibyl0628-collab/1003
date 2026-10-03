@@ -1,15 +1,15 @@
 /*
- * 對話腳本（純資料）。想修改諮商師說的話、選項、小建議，只要改這個檔案。
+ * 對話腳本（純資料）。想修改陪伴對話中說的話、選項、小建議，只要改這個檔案。
  *
  * 結構說明：
  *   TOPICS 是主題陣列，每個主題有 nodes（對話節點），從 start 指定的節點開始。
  *   節點欄位：
- *     say      諮商師說的話（陣列，一個項目一個氣泡）
+ *     say      陪伴對話中說的話（陣列，一個項目一個氣泡）
  *     slot     這題的回答要歸到摘要的哪一欄：situation / feeling / thought / need
  *     choices  選項陣列，用 C(文字, 下一個節點, 選項) 建立；沒有 choices 就是純文字輸入題
  *     next     使用者自己打字時，要前往的節點
  *     end      true 代表對話結束，進入摘要頁
- *   選項欄位：tip（會收進「小步驟」）、reply（點選後諮商師額外回一句）、crisis（點選後跳出求助資訊）
+ *   選項欄位：tip（會收進「小步驟」）、reply（點選後額外回一句）、crisis（點選後跳出求助資訊）
  */
 
 const C = (label, next, extra) => Object.assign({ label, next }, extra);
@@ -280,10 +280,27 @@ const SLOT_LABELS = {
   need: '我需要的'
 };
 
-// 求助專線（台灣）
-const HOTLINES = [
-  { name: '安心專線', number: '1925', note: '24 小時，心理諮詢' },
-  { name: '生命線', number: '1995', note: '24 小時，情緒與危機協談' },
-  { name: '張老師', number: '1980', note: '心理與情緒諮詢' },
-  { name: '警察／消防救護', number: '110 / 119', note: '緊急危險時請立即撥打' }
-];
+// 求助資源，依地區顯示。使用者可在頁尾切換地區。
+// 提醒：專線號碼可能變動，正式對外前請逐一撥打或上官網核對。
+//   number 有值 → 顯示成可撥打的電話；url 有值 → 顯示成外部連結
+const HOTLINES_BY_REGION = {
+  tw: {
+    label: '台灣',
+    lines: [
+      { name: '安心專線', number: '1925', note: '24 小時，心理諮詢' },
+      { name: '生命線', number: '1995', note: '24 小時，情緒與危機協談' },
+      { name: '張老師', number: '1980', note: '心理與情緒諮詢' },
+      { name: '保護專線', number: '113', note: '家暴、性侵害、兒少保護' },
+      { name: '警察／消防救護', number: '110 / 119', note: '緊急危險時請立即撥打' }
+    ]
+  },
+  intl: {
+    label: '其他地區',
+    lines: [
+      { name: '當地緊急電話', note: '有立即危險時，請撥打你所在地區的緊急電話' },
+      { name: 'Find a Helpline', url: 'https://findahelpline.com', note: '依國家與地區查詢求助專線' },
+      { name: 'Befrienders Worldwide', url: 'https://www.befrienders.org', note: '全球情緒支持與防自殺服務據點' }
+    ]
+  }
+};
+const DEFAULT_REGION = 'tw';
